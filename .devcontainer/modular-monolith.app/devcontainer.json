@@ -1,0 +1,29 @@
+{
+    "name": "OC Modular Monolith App Dev",
+    "dockerComposeFile": [
+        "../../compose.modular-monolith.dev.yml"
+    ],
+    "service": "app",
+    "workspaceFolder": "/workspace",
+    "features": {
+        "ghcr.io/devcontainers/features/terraform:1": {},
+        "ghcr.io/devcontainers/features/aws-cli:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "go.useLanguageServer": true,
+                "gopls": {
+                    "ui.semanticTokens": true
+                }
+            },
+            "extensions": [
+                "golang.Go",
+                "ms-azuretools.vscode-docker",
+                "hashicorp.terraform"
+            ]
+        }
+    },
+    "remoteUser": "root",
+    "postCreateCommand": "go version && go env -w GOPATH=/go && go work sync"
+}

@@ -1,0 +1,20 @@
+{
+    "name": "OC Modular Monolith Web Dev",
+    "dockerComposeFile": [
+        "../../compose.modular-monolith.dev.yml",
+        "../../compose.web.dev.yml"
+    ],
+    "service": "web",
+    "workspaceFolder": "/workspace",
+    "overrideCommand": false,
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "bradlc.vscode-tailwindcss"
+            ]
+        }
+    },
+    "postCreateCommand": "npm install"
+}

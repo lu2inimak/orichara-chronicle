@@ -1,0 +1,9 @@
+FROM golang:1.23-bookworm
+
+RUN apt-get update && apt-get install -y git curl unzip
+
+WORKDIR /workspace
+
+RUN go install github.com/air-verse/air@v1.61.7
+
+CMD ["air", "-c", ".air.toml"]
