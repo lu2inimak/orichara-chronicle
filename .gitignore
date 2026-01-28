@@ -7,4 +7,8 @@
 # environment variable files
 .env
 
-tmp
+tmp/
+
+.vscode/
+.idea/
+*.log
