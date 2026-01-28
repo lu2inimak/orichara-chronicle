@@ -76,6 +76,15 @@ The purpose of OCC is not merely to provide a data storage tool.
 
 Our mission is "to build an infrastructure that turns every creative activity into an asset, backed by context and trust."
 
+## Development
+
+```bash
+make dev
+```
+
+- Web: http://localhost:3000
+- API: http://localhost:8080
+
 ## Documentation
 
 Detailed specifications and architectural designs are provided below.
