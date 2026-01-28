@@ -1,0 +1,21 @@
+services:
+  api:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile.dev
+    working_dir: /workspace
+    volumes:
+      - ../../apps/api:/workspace
+    environment:
+      - APP_ENV=dev
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    env_file:
+      - ../config/aws.env
+    depends_on:
+      - localstack
+    networks:
+      - internal
+    ports:
+      - "8080:8080"

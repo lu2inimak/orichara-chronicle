@@ -1,9 +1,11 @@
 {
-    "name": "OC Modular Monolith App Dev",
+    "name": "OCC Apps Api Dev",
     "dockerComposeFile": [
-        "../../compose.modular-monolith.dev.yml"
+        "../../infra/compose/compose.network.yml",
+        "../../infra/compose/compose.api.dev.yml",
+        "../../infra/compose/compose.localstack.yml"
     ],
-    "service": "app",
+    "service": "api",
     "workspaceFolder": "/workspace",
     "features": {
         "ghcr.io/devcontainers/features/terraform:1": {},
@@ -24,6 +26,5 @@
             ]
         }
     },
-    "remoteUser": "root",
-    "postCreateCommand": "go version && go env -w GOPATH=/go && go work sync"
+    "remoteUser": "root"
 }

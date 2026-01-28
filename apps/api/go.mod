@@ -1,4 +1,4 @@
-module example.com/modular-monolith
+module example.com/api
 
 go 1.23.12
 

@@ -6,3 +6,5 @@
 
 # environment variable files
 .env
+
+tmp

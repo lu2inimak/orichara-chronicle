@@ -36,7 +36,7 @@ graph TD
     style Act fill:#bbf,stroke:#333
 ```
 
-OC structures creative data by separating it into immutable assets, settings, and definitions of belonging.
+OCC structures creative data by separating it into immutable assets, settings, and definitions of belonging.
 
 - Character (Base Configuration): Immutable master data shared across all parallel worlds (e.g., appearance, core personality).
 
@@ -48,7 +48,7 @@ OC structures creative data by separating it into immutable assets, settings, an
 
 ## Core Workflow (MVP Experience)
 
-OC seamlessly expands from personal setting management to collaborative creation through the following steps:
+OCC seamlessly expands from personal setting management to collaborative creation through the following steps:
 
 1. Register Character: Define base information used across all worlds.
 
@@ -60,7 +60,7 @@ OC seamlessly expands from personal setting management to collaborative creation
 
 ## Collaboration & Rights Management (Governance)
 
-OC provides a protocol to ensure data integrity during interactions with characters owned by others.
+OCC provides a protocol to ensure data integrity during interactions with characters owned by others.
 
 - Multi-party Approval: When joining another's "World" or recording an "Activity" involving multiple characters, the system requires consensus from all stakeholders. This prevents unauthorized setting changes or publications.
 
@@ -72,7 +72,7 @@ OC provides a protocol to ensure data integrity during interactions with charact
 
 ## Vision
 
-The purpose of OC is not merely to provide a data storage tool.
+The purpose of OCC is not merely to provide a data storage tool.
 
 Our mission is "to build an infrastructure that turns every creative activity into an asset, backed by context and trust."
 

@@ -1,8 +1,7 @@
 {
-    "name": "OC Modular Monolith Web Dev",
+    "name": "OCC Apps Web Dev",
     "dockerComposeFile": [
-        "../../compose.modular-monolith.dev.yml",
-        "../../compose.web.dev.yml"
+        "../../infra/compose/compose.web.dev.yml"
     ],
     "service": "web",
     "workspaceFolder": "/workspace",
@@ -15,6 +14,5 @@
                 "bradlc.vscode-tailwindcss"
             ]
         }
-    },
-    "postCreateCommand": "npm install"
+    }
 }

@@ -1,18 +1,13 @@
 services:
   web:
     build:
-      context: ./web
+      context: ../../apps/web
       dockerfile: Dockerfile.dev
-    container_name: web
     working_dir: /workspace
     volumes:
-      - ./web:/workspace
+      - ../../apps/web:/workspace
       - /workspace/node_modules
     environment:
-      PUBLIC_API_BASE_URL: http://app:8080
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
     ports:
       - "3000:3000"
-    depends_on:
-      - app
-    networks:
-      - internal

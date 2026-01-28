@@ -89,11 +89,11 @@ For activities involving multiple characters (Collaborative Logs), visibility is
 
 ```mermaid
 C4Container
-    title Container diagram for OC System
+    title Container diagram for OCC System
 
     Person(user, "Creator / User", "Original character owner and world host.")
     
-    System_Boundary(oc_boundary, "OC System") {
+    System_Boundary(oc_boundary, "OCC System") {
         Container(web_app, "Web Application", "Next.js / TypeScript", "The interface to browse timelines and manage settings.")
         Container(auth, "Authentication", "Amazon Cognito", "Handles SNS login (X/Discord) and JWT issuance.")
         Container(api, "API Layer", "API Gateway (HTTP API)", "Entry point for all backend requests.")
@@ -117,11 +117,11 @@ C4Container
 
 ```mermaid
 C4Component
-    title Component diagram for OC Lambda (Lambdalith)
+    title Component diagram for OCC Lambda (Lambdalith)
 
     Container(api_gw, "API Gateway", "HTTP API")
     
-    Container_Boundary(lambda_boundary, "OC Monolith Lambda") {
+    Container_Boundary(lambda_boundary, "OCC Monolith Lambda") {
         Component(router, "Routing / Handler", "Entry point", "Routes requests to specific services.")
         Component(auth_svc, "Auth Service", "Identity Logic", "Validates User/Character ownership.")
         Component(gov_svc, "Governance Service", "Affiliation Logic", "Manages World rules and join requests.")
