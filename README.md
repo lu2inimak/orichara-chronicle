@@ -90,3 +90,5 @@ make dev
 Detailed specifications and architectural designs are provided below.
 
 1. [Technical overview](./docs/10_technical_overview.md)
+
+2. [ADRs](./docs/ADR/)
