@@ -35,6 +35,7 @@ public sealed class DynamoActivityRepository : IActivityRepository
             ["Content"] = new AttributeValue { S = activity.Content },
             ["Status"] = new AttributeValue { S = activity.Status.ToString() },
             ["CreatedAt"] = new AttributeValue { S = activity.CreatedAt },
+            ["ExpiresAt"] = new AttributeValue { S = activity.ExpiresAt ?? string.Empty },
             ["CoCreators"] = ToStringList(activity.CoCreatorIds),
             ["RequiredSignatures"] = ToStringList(requiredSignatures),
             ["Signatures"] = ToStringList(signatures)
@@ -97,6 +98,7 @@ public sealed class DynamoActivityRepository : IActivityRepository
             Content = response.Item.TryGetValue("Content", out var content) ? content.S ?? string.Empty : string.Empty,
             Status = ParseStatus(response.Item.TryGetValue("Status", out var status) ? status.S : null),
             CreatedAt = response.Item.TryGetValue("CreatedAt", out var created) ? created.S ?? string.Empty : string.Empty,
+            ExpiresAt = response.Item.TryGetValue("ExpiresAt", out var expires) ? expires.S : null,
             CoCreators = FromStringList(response.Item.TryGetValue("CoCreators", out var cc) ? cc : null),
             RequiredSignatures = FromStringList(response.Item.TryGetValue("RequiredSignatures", out var req) ? req : null),
             Signatures = FromStringList(response.Item.TryGetValue("Signatures", out var sig) ? sig : null)
@@ -137,6 +139,83 @@ public sealed class DynamoActivityRepository : IActivityRepository
             Content = response.Attributes.TryGetValue("Content", out var content) ? content.S ?? string.Empty : string.Empty,
             Status = ParseStatus(response.Attributes.TryGetValue("Status", out var statusValue) ? statusValue.S : null),
             CreatedAt = response.Attributes.TryGetValue("CreatedAt", out var created) ? created.S ?? string.Empty : string.Empty,
+            ExpiresAt = response.Attributes.TryGetValue("ExpiresAt", out var expires) ? expires.S : null,
+            CoCreators = FromStringList(response.Attributes.TryGetValue("CoCreators", out var cc) ? cc : null),
+            RequiredSignatures = FromStringList(response.Attributes.TryGetValue("RequiredSignatures", out var req) ? req : null),
+            Signatures = FromStringList(response.Attributes.TryGetValue("Signatures", out var sig) ? sig : null)
+        };
+    }
+
+    public async Task<ActivityRecord> UpdateActivityStatusAsync(ActivityRecord record, ActivityStatus status, bool hideFromTimeline, CancellationToken cancellationToken)
+    {
+        EnsureTable();
+        var setParts = new List<string> { "#Status = :Status" };
+        var names = new Dictionary<string, string> { ["#Status"] = "Status" };
+        var values = new Dictionary<string, AttributeValue>
+        {
+            [":Status"] = new AttributeValue { S = status.ToString() }
+        };
+        if (!string.IsNullOrWhiteSpace(record.ExpiresAt))
+        {
+            setParts.Add("#ExpiresAt = :ExpiresAt");
+            names["#ExpiresAt"] = "ExpiresAt";
+            values[":ExpiresAt"] = new AttributeValue { S = record.ExpiresAt };
+        }
+
+        var response = await _dynamo.UpdateItemAsync(new UpdateItemRequest
+        {
+            TableName = _options.TableName,
+            Key = new Dictionary<string, AttributeValue>
+            {
+                ["PK"] = new AttributeValue { S = $"ACT#{record.Id}" },
+                ["SK"] = new AttributeValue { S = "INFO" }
+            },
+            UpdateExpression = "SET " + string.Join(", ", setParts),
+            ExpressionAttributeNames = names,
+            ExpressionAttributeValues = values,
+            ReturnValues = "ALL_NEW"
+        }, cancellationToken);
+
+        var timelineUpdateExpr = hideFromTimeline
+            ? "SET #Status = :Status, #GsiPk = :Empty, #GsiSk = :Empty"
+            : "SET #Status = :Status";
+
+        var timelineNames = new Dictionary<string, string> { ["#Status"] = "Status" };
+        var timelineValues = new Dictionary<string, AttributeValue>
+        {
+            [":Status"] = new AttributeValue { S = status.ToString() }
+        };
+
+        if (hideFromTimeline)
+        {
+            timelineNames["#GsiPk"] = "GSI_TimelinePK";
+            timelineNames["#GsiSk"] = "GSI_TimelineSK";
+            timelineValues[":Empty"] = new AttributeValue { S = string.Empty };
+        }
+
+        await _dynamo.UpdateItemAsync(new UpdateItemRequest
+        {
+            TableName = _options.TableName,
+            Key = new Dictionary<string, AttributeValue>
+            {
+                ["PK"] = new AttributeValue { S = $"AFF#{record.AffiliationId}" },
+                ["SK"] = new AttributeValue { S = $"ACT#{record.CreatedAt}" }
+            },
+            UpdateExpression = timelineUpdateExpr,
+            ExpressionAttributeNames = timelineNames,
+            ExpressionAttributeValues = timelineValues
+        }, cancellationToken);
+
+        return new ActivityRecord
+        {
+            Id = record.Id,
+            AffiliationId = response.Attributes.TryGetValue("AffiliationID", out var aff) ? aff.S ?? string.Empty : string.Empty,
+            WorldId = response.Attributes.TryGetValue("WorldID", out var world) ? world.S ?? string.Empty : string.Empty,
+            OwnerId = response.Attributes.TryGetValue("OwnerID", out var owner) ? owner.S ?? string.Empty : string.Empty,
+            Content = response.Attributes.TryGetValue("Content", out var content) ? content.S ?? string.Empty : string.Empty,
+            Status = ParseStatus(response.Attributes.TryGetValue("Status", out var statusValue) ? statusValue.S : null),
+            CreatedAt = response.Attributes.TryGetValue("CreatedAt", out var created) ? created.S ?? string.Empty : string.Empty,
+            ExpiresAt = response.Attributes.TryGetValue("ExpiresAt", out var expires) ? expires.S : null,
             CoCreators = FromStringList(response.Attributes.TryGetValue("CoCreators", out var cc) ? cc : null),
             RequiredSignatures = FromStringList(response.Attributes.TryGetValue("RequiredSignatures", out var req) ? req : null),
             Signatures = FromStringList(response.Attributes.TryGetValue("Signatures", out var sig) ? sig : null)

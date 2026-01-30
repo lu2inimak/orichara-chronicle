@@ -7,5 +7,6 @@ public interface IAffiliationRepository
 {
     Task<Affiliation> CreateAffiliationAsync(Affiliation affiliation, CancellationToken cancellationToken);
     Task<Affiliation?> GetAffiliationAsync(string affiliationId, CancellationToken cancellationToken);
+    Task<Affiliation?> GetAffiliationByWorldCharacterAsync(string worldId, string characterId, CancellationToken cancellationToken);
     Task<Affiliation> UpdateAffiliationStatusAsync(Affiliation affiliation, AffiliationStatus status, CancellationToken cancellationToken);
 }

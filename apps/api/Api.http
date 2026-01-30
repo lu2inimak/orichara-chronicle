@@ -4,9 +4,6 @@
 ### Health
 GET {{baseUrl}}/health
 
-### AWS Check
-GET {{baseUrl}}/aws-check
-
 ### Get Me
 GET {{baseUrl}}/me
 X-User-Id: {{userId}}
@@ -40,6 +37,31 @@ X-User-Id: {{userId}}
   "name": "My World",
   "description": "test"
 }
+
+### Create Activity (Idempotency-Key)
+POST {{baseUrl}}/activities
+Content-Type: application/json
+X-User-Id: {{userId}}
+Idempotency-Key: {{activityKey}}
+
+{
+  "affiliation_id": "{{affiliationId}}",
+  "content": "hello",
+  "co_creators": []
+}
+
+### Reject Activity
+POST {{baseUrl}}/activities/{{activityId}}/reject
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "affiliation_id": "{{affiliationId}}"
+}
+
+### Archive Pending Activity
+POST {{baseUrl}}/activities/{{activityId}}/archive
+X-User-Id: {{userId}}
 
 ### Request Join
 POST {{baseUrl}}/worlds/{{worldId}}/join

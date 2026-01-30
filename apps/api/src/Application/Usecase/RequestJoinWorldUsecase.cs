@@ -38,6 +38,12 @@ public sealed class RequestJoinWorldUsecase : IUsecase<RequestJoinWorldRequest, 
             throw new ArgumentException("character_id is required");
         }
 
+        var existing = await _affiliations.GetAffiliationByWorldCharacterAsync(request.WorldId, request.CharacterId, cancellationToken);
+        if (existing != null)
+        {
+            return existing;
+        }
+
         var world = await _repository.GetWorldAsync(request.WorldId, cancellationToken);
         if (world == null)
         {

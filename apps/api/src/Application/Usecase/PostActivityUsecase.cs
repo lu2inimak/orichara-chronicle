@@ -11,6 +11,7 @@ public sealed class PostActivityUsecase : IUsecase<PostActivityRequest, Activity
     private readonly IActivityRepository _repository;
     private readonly IAffiliationRepository _affiliations;
     private readonly IAuthenticator _authenticator;
+    private static readonly TimeSpan PendingExpiry = TimeSpan.FromHours(24);
 
     public PostActivityUsecase(IActivityRepository repository, IAffiliationRepository affiliations, IAuthenticator authenticator)
     {
@@ -36,6 +37,32 @@ public sealed class PostActivityUsecase : IUsecase<PostActivityRequest, Activity
             throw new ArgumentException("content is required");
         }
 
+        var idempotencyKey = string.IsNullOrWhiteSpace(request.IdempotencyKey) ? null : request.IdempotencyKey.Trim();
+        if (idempotencyKey != null)
+        {
+            var existing = await _repository.GetActivityAsync(idempotencyKey, cancellationToken);
+            if (existing != null)
+            {
+                if (!string.Equals(existing.OwnerId, auth.UserId, StringComparison.Ordinal))
+                {
+                    throw new UnauthorizedAccessException("ownership_mismatch");
+                }
+                return new Activity
+                {
+                    Id = existing.Id,
+                    AffiliationId = existing.AffiliationId,
+                    WorldId = existing.WorldId,
+                    OwnerId = existing.OwnerId,
+                    Content = existing.Content,
+                    Status = existing.Status,
+                    CreatedAt = existing.CreatedAt,
+                    ExpiresAt = existing.ExpiresAt,
+                    CoCreatorIds = existing.CoCreators,
+                    SignatureIds = existing.Signatures
+                };
+            }
+        }
+
         var affiliation = await _affiliations.GetAffiliationAsync(request.AffiliationId, cancellationToken);
         if (affiliation == null)
         {
@@ -50,7 +77,7 @@ public sealed class PostActivityUsecase : IUsecase<PostActivityRequest, Activity
             throw new UnauthorizedAccessException("affiliation_not_active");
         }
 
-        var now = DateTime.UtcNow.ToString("O");
+        var now = DateTime.UtcNow;
         var normalizedCoCreators = (request.CoCreators ?? new List<string>())
             .Where(id => !string.IsNullOrWhiteSpace(id))
             .Select(id => id.Trim())
@@ -67,13 +94,14 @@ public sealed class PostActivityUsecase : IUsecase<PostActivityRequest, Activity
 
         var activity = new Activity
         {
-            Id = Guid.NewGuid().ToString("N"),
+            Id = idempotencyKey ?? Guid.NewGuid().ToString("N"),
             AffiliationId = request.AffiliationId,
             WorldId = affiliation.WorldId,
             OwnerId = auth.UserId,
             Content = request.Content.Trim(),
             Status = status,
-            CreatedAt = now,
+            CreatedAt = now.ToString("O"),
+            ExpiresAt = isMultiSig ? now.Add(PendingExpiry).ToString("O") : null,
             CoCreatorIds = normalizedCoCreators,
             SignatureIds = signatures
         };

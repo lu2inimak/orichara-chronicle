@@ -4,6 +4,7 @@ using Api.Domain.Repositories;
 using Api.Infrastructure;
 using Api.Infrastructure.Auth;
 using Api.Infrastructure.Repositories;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -17,7 +18,7 @@ public class RepositoryTests
         var tableName = "occ-main";
         var db = new InMemoryDynamoDbClient(tableName);
         var options = new DynamoOptions(tableName);
-        var auth = new MockAuthenticator();
+        var auth = new MockAuthenticator(new NullLogger<MockAuthenticator>());
 
         ICharacterRepository characterRepo = new DynamoCharacterRepository(db, options);
         IUserRepository userRepo = new DynamoUserRepository(db, options);

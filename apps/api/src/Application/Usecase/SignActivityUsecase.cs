@@ -3,6 +3,7 @@ using Api.Application.DTO;
 using Api.Domain.Entities;
 using Api.Domain.Enums;
 using Api.Domain.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace Api.Application.Usecase;
 
@@ -11,12 +12,18 @@ public sealed class SignActivityUsecase : IUsecase<SignActivityRequest, Activity
     private readonly IActivityRepository _repository;
     private readonly IAffiliationRepository _affiliations;
     private readonly IAuthenticator _authenticator;
+    private readonly ILogger<SignActivityUsecase> _logger;
 
-    public SignActivityUsecase(IActivityRepository repository, IAffiliationRepository affiliations, IAuthenticator authenticator)
+    public SignActivityUsecase(
+        IActivityRepository repository,
+        IAffiliationRepository affiliations,
+        IAuthenticator authenticator,
+        ILogger<SignActivityUsecase> logger)
     {
         _repository = repository;
         _affiliations = affiliations;
         _authenticator = authenticator;
+        _logger = logger;
     }
 
     public async Task<Activity> ExecuteAsync(SignActivityRequest request, CancellationToken cancellationToken)
@@ -46,10 +53,7 @@ public sealed class SignActivityUsecase : IUsecase<SignActivityRequest, Activity
         {
             throw new InvalidOperationException("signer_not_in_cocreators");
         }
-        if (activity.Signatures.Contains(request.AffiliationId, StringComparer.Ordinal))
-        {
-            throw new InvalidOperationException("already_signed");
-        }
+        var alreadySigned = activity.Signatures.Contains(request.AffiliationId, StringComparer.Ordinal);
 
         var affiliation = await _affiliations.GetAffiliationAsync(request.AffiliationId, cancellationToken);
         if (affiliation == null)
@@ -61,6 +65,23 @@ public sealed class SignActivityUsecase : IUsecase<SignActivityRequest, Activity
             throw new UnauthorizedAccessException("ownership_mismatch");
         }
 
+        if (alreadySigned)
+        {
+            return new Activity
+            {
+                Id = activity.Id,
+                AffiliationId = activity.AffiliationId,
+                WorldId = activity.WorldId,
+                OwnerId = activity.OwnerId,
+                Content = activity.Content,
+                Status = activity.Status,
+                CreatedAt = activity.CreatedAt,
+                ExpiresAt = activity.ExpiresAt,
+                CoCreatorIds = activity.CoCreators,
+                SignatureIds = activity.Signatures
+            };
+        }
+
         var newSignatures = new List<string>(activity.Signatures) { request.AffiliationId };
         var allSigned = activity.RequiredSignatures.All(req => newSignatures.Contains(req, StringComparer.Ordinal));
         var newStatus = allSigned ? ActivityStatus.Published : activity.Status;
@@ -69,6 +90,8 @@ public sealed class SignActivityUsecase : IUsecase<SignActivityRequest, Activity
         if (allSigned)
         {
             await _repository.PublishActivityAsync(updated, cancellationToken);
+            _logger.LogInformation("metric=activity.signature_completed request_id={RequestId} activity_id={ActivityId} world_id={WorldId}",
+                Api.Application.Common.RequestContext.RequestId, updated.Id, updated.WorldId);
         }
 
         return new Activity
@@ -80,6 +103,7 @@ public sealed class SignActivityUsecase : IUsecase<SignActivityRequest, Activity
             Content = updated.Content,
             Status = updated.Status,
             CreatedAt = updated.CreatedAt,
+            ExpiresAt = updated.ExpiresAt,
             CoCreatorIds = updated.CoCreators,
             SignatureIds = updated.Signatures
         };

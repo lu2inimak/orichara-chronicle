@@ -4,6 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateSourceLinkFile>false</GenerateSourceLinkFile>
+    <SourceLinkFile></SourceLinkFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,5 +15,6 @@
   <ItemGroup>
     <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.12" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-preview.6.25358.103" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-preview.6.25358.103" />
   </ItemGroup>
 </Project>
