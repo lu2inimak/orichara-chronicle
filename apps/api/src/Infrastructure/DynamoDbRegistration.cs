@@ -37,7 +37,7 @@ public static class DynamoDbRegistration
         }
 
         services.AddSingleton<IAmazonDynamoDB>(client);
-        services.AddSingleton<IDynamoDbClient>(new DynamoDbClientWrapper(client));
+        services.AddSingleton<IDynamoDbClient, DynamoDbClientWrapper>();
         return services;
     }
 }

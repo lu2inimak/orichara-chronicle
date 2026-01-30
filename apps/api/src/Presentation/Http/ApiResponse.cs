@@ -1,5 +1,6 @@
 namespace Api.Presentation.Http;
 
+using Api.Application.Common;
 using Microsoft.AspNetCore.Http;
 
 public sealed class ApiResponse<T>
@@ -28,6 +29,7 @@ public static class ApiResults
     public static IResult Error(HttpContext context, ApiError error)
     {
         var requestId = RequestId(context);
+        context.Response.Headers["X-Error-Code"] = error.Code;
         var payload = new ApiResponse<object>
         {
             Ok = false,
@@ -39,6 +41,10 @@ public static class ApiResults
 
     public static string RequestId(HttpContext context)
     {
+        if (RequestContext.RequestId is { Length: > 0 })
+        {
+            return RequestContext.RequestId!;
+        }
         if (context.Request.Headers.TryGetValue("X-Request-Id", out var value) && !string.IsNullOrWhiteSpace(value))
         {
             return value.ToString();

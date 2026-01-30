@@ -6,6 +6,7 @@ using Api.Domain.ReadModels;
 using Api.Infrastructure;
 using Api.Infrastructure.Auth;
 using Api.Infrastructure.Repositories;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Api.Tests;
@@ -40,7 +41,7 @@ public class GovernanceHardeningTests
         var requestJoin = new RequestJoinWorldUsecase(worldRepo, affiliationRepo, characterRepo, auth);
         var approveAffiliation = new ApproveAffiliationUsecase(worldRepo, affiliationRepo, auth);
         var postActivity = new PostActivityUsecase(activityRepo, affiliationRepo, auth);
-        var signActivity = new SignActivityUsecase(activityRepo, affiliationRepo, auth);
+        var signActivity = new SignActivityUsecase(activityRepo, affiliationRepo, auth, new NullLogger<SignActivityUsecase>());
 
         var hostId = "user_host";
         var coUserId = "user_co";
@@ -151,7 +152,7 @@ public class GovernanceHardeningTests
     {
         var db = new InMemoryDynamoDbClient("occ-main");
         var options = new DynamoOptions("occ-main");
-        var auth = new MockAuthenticator();
+        var auth = new MockAuthenticator(new NullLogger<MockAuthenticator>());
         var worldRepoImpl = new DynamoWorldRepository(db, options);
         return (auth, new DynamoCharacterRepository(db, options), worldRepoImpl, worldRepoImpl);
     }

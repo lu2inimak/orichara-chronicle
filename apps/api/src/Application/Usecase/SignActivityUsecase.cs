@@ -3,6 +3,7 @@ using Api.Application.DTO;
 using Api.Domain.Entities;
 using Api.Domain.Enums;
 using Api.Domain.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace Api.Application.Usecase;
 
@@ -11,12 +12,18 @@ public sealed class SignActivityUsecase : IUsecase<SignActivityRequest, Activity
     private readonly IActivityRepository _repository;
     private readonly IAffiliationRepository _affiliations;
     private readonly IAuthenticator _authenticator;
+    private readonly ILogger<SignActivityUsecase> _logger;
 
-    public SignActivityUsecase(IActivityRepository repository, IAffiliationRepository affiliations, IAuthenticator authenticator)
+    public SignActivityUsecase(
+        IActivityRepository repository,
+        IAffiliationRepository affiliations,
+        IAuthenticator authenticator,
+        ILogger<SignActivityUsecase> logger)
     {
         _repository = repository;
         _affiliations = affiliations;
         _authenticator = authenticator;
+        _logger = logger;
     }
 
     public async Task<Activity> ExecuteAsync(SignActivityRequest request, CancellationToken cancellationToken)
@@ -83,6 +90,8 @@ public sealed class SignActivityUsecase : IUsecase<SignActivityRequest, Activity
         if (allSigned)
         {
             await _repository.PublishActivityAsync(updated, cancellationToken);
+            _logger.LogInformation("metric=activity.signature_completed request_id={RequestId} activity_id={ActivityId} world_id={WorldId}",
+                Api.Application.Common.RequestContext.RequestId, updated.Id, updated.WorldId);
         }
 
         return new Activity

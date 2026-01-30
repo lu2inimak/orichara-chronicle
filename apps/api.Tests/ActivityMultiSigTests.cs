@@ -5,6 +5,7 @@ using Api.Domain.Repositories;
 using Api.Infrastructure;
 using Api.Infrastructure.Auth;
 using Api.Infrastructure.Repositories;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -18,7 +19,7 @@ public class ActivityMultiSigTests
         var tableName = "occ-main";
         var db = new InMemoryDynamoDbClient(tableName);
         var options = new DynamoOptions(tableName);
-        var auth = new MockAuthenticator();
+        var auth = new MockAuthenticator(new NullLogger<MockAuthenticator>());
 
         ICharacterRepository characterRepo = new DynamoCharacterRepository(db, options);
         var worldRepoImpl = new DynamoWorldRepository(db, options);
@@ -31,7 +32,7 @@ public class ActivityMultiSigTests
         var requestJoin = new RequestJoinWorldUsecase(worldRepo, affiliationRepo, characterRepo, auth);
         var approveAffiliation = new ApproveAffiliationUsecase(worldRepo, affiliationRepo, auth);
         var postActivity = new PostActivityUsecase(activityRepo, affiliationRepo, auth);
-        var signActivity = new SignActivityUsecase(activityRepo, affiliationRepo, auth);
+        var signActivity = new SignActivityUsecase(activityRepo, affiliationRepo, auth, new NullLogger<SignActivityUsecase>());
         var getTimeline = new GetWorldTimelineUsecase(activityRepo, auth);
 
         var hostId = "user_host";
