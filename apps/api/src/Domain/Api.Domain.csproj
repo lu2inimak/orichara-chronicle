@@ -4,5 +4,6 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateSourceLinkFile>false</GenerateSourceLinkFile>
+    <SourceLinkFile></SourceLinkFile>
   </PropertyGroup>
 </Project>
