@@ -5,9 +5,15 @@ API      = -f infra/compose/compose.api.dev.yml
 WEB      = -f infra/compose/compose.web.dev.yml
 LOCAL    = -f infra/compose/compose.localstack.yml
 
+API_PORT ?= 8080
+WEB_PORT ?= 3000
+NEXT_PUBLIC_API_BASE_URL ?= http://localhost:$(API_PORT)
+
 .PHONY: dev api web local stop logs ps rebuild
 
 dev:
+	API_PORT=$(API_PORT) WEB_PORT=$(WEB_PORT) \
+	NEXT_PUBLIC_API_BASE_URL=$(NEXT_PUBLIC_API_BASE_URL) \
 	$(COMPOSE) $(NETWORK) $(LOCAL) $(API) $(WEB) up -d
 	
 api:
@@ -15,9 +21,6 @@ api:
 
 web:
 	$(COMPOSE) $(WEB) up -d
-	
-local:
-	$(COMPOSE) $(NETWORK) $(LOCAL) up -d
 
 stop:
 	$(COMPOSE) down
@@ -30,4 +33,6 @@ ps:
 
 rebuild:
 	$(COMPOSE) $(NETWORK) $(LOCAL) $(API) down
+	API_PORT=$(API_PORT) WEB_PORT=$(WEB_PORT) \
+	NEXT_PUBLIC_API_BASE_URL=$(NEXT_PUBLIC_API_BASE_URL) \
 	$(COMPOSE) $(NETWORK) $(LOCAL) $(API) up -d --build

@@ -21,4 +21,4 @@ services:
     networks:
       - internal
     ports:
-      - "8080:8080"
+      - "${API_PORT:-8080}:8080"
