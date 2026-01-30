@@ -5,7 +5,7 @@ API      = -f infra/compose/compose.api.dev.yml
 WEB      = -f infra/compose/compose.web.dev.yml
 LOCAL    = -f infra/compose/compose.localstack.yml
 
-.PHONY: dev api web local stop logs ps
+.PHONY: dev api web local stop logs ps rebuild
 
 dev:
 	$(COMPOSE) $(NETWORK) $(LOCAL) $(API) $(WEB) up -d
@@ -27,3 +27,7 @@ logs:
 
 ps:
 	$(COMPOSE) ps
+
+rebuild:
+	$(COMPOSE) $(NETWORK) $(LOCAL) $(API) down
+	$(COMPOSE) $(NETWORK) $(LOCAL) $(API) up -d --build
