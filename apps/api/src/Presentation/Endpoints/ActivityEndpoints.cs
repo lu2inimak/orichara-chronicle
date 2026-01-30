@@ -16,6 +16,8 @@ public static class ActivityEndpoints
     {
         services.AddScoped<PostActivityUsecase>();
         services.AddScoped<SignActivityUsecase>();
+        services.AddScoped<RejectActivityUsecase>();
+        services.AddScoped<ArchivePendingActivityUsecase>();
         services.AddScoped<IAffiliationRepository, DynamoWorldRepository>();
         services.AddScoped<IActivityRepository, DynamoActivityRepository>();
         return services;
@@ -31,7 +33,8 @@ public static class ActivityEndpoints
                     ReadAuthToken(context),
                     request.AffiliationId,
                     request.Content,
-                    request.CoCreators
+                    request.CoCreators,
+                    ReadIdempotencyKey(context)
                 ), ct);
                 return ApiResults.Ok(context, created, StatusCodes.Status201Created);
             }
@@ -190,6 +193,124 @@ public static class ActivityEndpoints
             }
         });
 
+        app.MapPost("/activities/{id}/reject", async (HttpContext context, string id, RejectActivityUsecase usecase, ActivityRejectRequest request, CancellationToken ct) =>
+        {
+            try
+            {
+                var updated = await usecase.ExecuteAsync(new RejectActivityRequest(
+                    ReadAuthToken(context),
+                    id,
+                    request.AffiliationId
+                ), ct);
+                return ApiResults.Ok(context, updated);
+            }
+            catch (UnauthorizedAccessException ex) when (ex.Message.Contains("auth_required"))
+            {
+                return ApiResults.Error(context, new ApiError
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Code = "AUTH_REQUIRED",
+                    Message = "Authentication required."
+                });
+            }
+            catch (ArgumentException ex) when (ex.Message.Contains("affiliation_id"))
+            {
+                return ApiResults.Error(context, new ApiError
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Code = "MISSING_FIELD",
+                    Message = "affiliation_id is required.",
+                    Details = new Dictionary<string, object> { ["field"] = "affiliation_id" }
+                });
+            }
+            catch (KeyNotFoundException ex) when (ex.Message.Contains("activity_not_found"))
+            {
+                return ApiResults.Error(context, new ApiError
+                {
+                    Status = StatusCodes.Status404NotFound,
+                    Code = "NOT_FOUND",
+                    Message = "Activity not found."
+                });
+            }
+            catch (KeyNotFoundException ex) when (ex.Message.Contains("affiliation_not_found"))
+            {
+                return ApiResults.Error(context, new ApiError
+                {
+                    Status = StatusCodes.Status404NotFound,
+                    Code = "NOT_FOUND",
+                    Message = "Affiliation not found."
+                });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return ApiResults.Error(context, new ApiError
+                {
+                    Status = StatusCodes.Status403Forbidden,
+                    Code = "OWNERSHIP_MISMATCH",
+                    Message = "You do not own this affiliation."
+                });
+            }
+            catch (Exception ex)
+            {
+                return ApiResults.Error(context, new ApiError
+                {
+                    Status = StatusCodes.Status500InternalServerError,
+                    Code = "INTERNAL_ERROR",
+                    Message = "Failed to reject activity.",
+                    Details = new Dictionary<string, object> { ["error"] = ex.Message }
+                });
+            }
+        });
+
+        app.MapPost("/activities/{id}/archive", async (HttpContext context, string id, ArchivePendingActivityUsecase usecase, CancellationToken ct) =>
+        {
+            try
+            {
+                var updated = await usecase.ExecuteAsync(new ArchivePendingActivityRequest(
+                    ReadAuthToken(context),
+                    id
+                ), ct);
+                return ApiResults.Ok(context, updated);
+            }
+            catch (UnauthorizedAccessException ex) when (ex.Message.Contains("auth_required"))
+            {
+                return ApiResults.Error(context, new ApiError
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Code = "AUTH_REQUIRED",
+                    Message = "Authentication required."
+                });
+            }
+            catch (ArgumentException)
+            {
+                return ApiResults.Error(context, new ApiError
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Code = "MISSING_FIELD",
+                    Message = "activity_id is required."
+                });
+            }
+            catch (KeyNotFoundException)
+            {
+                return ApiResults.Error(context, new ApiError
+                {
+                    Status = StatusCodes.Status404NotFound,
+                    Code = "NOT_FOUND",
+                    Message = "Activity not found."
+                });
+            }
+            catch (Exception ex)
+            {
+                return ApiResults.Error(context, new ApiError
+                {
+                    Status = StatusCodes.Status500InternalServerError,
+                    Code = "INTERNAL_ERROR",
+                    Message = "Failed to archive activity.",
+                    Details = new Dictionary<string, object> { ["error"] = ex.Message }
+                });
+            }
+        });
+
         return app;
     }
 
@@ -202,6 +323,12 @@ public static class ActivityEndpoints
         }
         var userId = context.Request.Headers["X-User-Id"].FirstOrDefault();
         return string.IsNullOrWhiteSpace(userId) ? null : userId;
+    }
+
+    private static string? ReadIdempotencyKey(HttpContext context)
+    {
+        var key = context.Request.Headers["Idempotency-Key"].FirstOrDefault();
+        return string.IsNullOrWhiteSpace(key) ? null : key;
     }
 }
 
@@ -216,6 +343,12 @@ public sealed class ActivityCreateRequest
 }
 
 public sealed class ActivitySignRequest
+{
+    [System.Text.Json.Serialization.JsonPropertyName("affiliation_id")]
+    public string AffiliationId { get; set; } = string.Empty;
+}
+
+public sealed class ActivityRejectRequest
 {
     [System.Text.Json.Serialization.JsonPropertyName("affiliation_id")]
     public string AffiliationId { get; set; } = string.Empty;

@@ -9,6 +9,7 @@ public interface IActivityRepository
     Task<Activity> CreateActivityAsync(Activity activity, List<string> requiredSignatures, List<string> signatures, bool publishTimeline, CancellationToken cancellationToken);
     Task<ActivityRecord?> GetActivityAsync(string activityId, CancellationToken cancellationToken);
     Task<ActivityRecord> UpdateActivitySignaturesAsync(ActivityRecord record, List<string> signatures, ActivityStatus status, CancellationToken cancellationToken);
+    Task<ActivityRecord> UpdateActivityStatusAsync(ActivityRecord record, ActivityStatus status, bool hideFromTimeline, CancellationToken cancellationToken);
     Task PublishActivityAsync(ActivityRecord record, CancellationToken cancellationToken);
     Task<IReadOnlyList<Activity>> ListWorldTimelineAsync(string worldId, int limit, CancellationToken cancellationToken);
 }

@@ -134,6 +134,33 @@ public sealed class DynamoWorldRepository : IWorldRepository, IAffiliationReposi
         return MapAffiliation(response.Item, affiliationId);
     }
 
+    public async Task<Affiliation?> GetAffiliationByWorldCharacterAsync(string worldId, string characterId, CancellationToken cancellationToken)
+    {
+        EnsureTable();
+        var response = await _dynamo.GetItemAsync(new GetItemRequest
+        {
+            TableName = _options.TableName,
+            Key = new Dictionary<string, AttributeValue>
+            {
+                ["PK"] = new AttributeValue { S = $"WORLD#{worldId}" },
+                ["SK"] = new AttributeValue { S = $"AFF#{characterId}" }
+            }
+        }, cancellationToken);
+
+        if (response.Item == null || response.Item.Count == 0)
+        {
+            return null;
+        }
+
+        var affiliationId = response.Item.TryGetValue("AffiliationID", out var affId) ? affId.S ?? string.Empty : string.Empty;
+        if (string.IsNullOrWhiteSpace(affiliationId))
+        {
+            return null;
+        }
+
+        return await GetAffiliationAsync(affiliationId, cancellationToken);
+    }
+
     public async Task<Affiliation> UpdateAffiliationStatusAsync(Affiliation affiliation, AffiliationStatus status, CancellationToken cancellationToken)
     {
         EnsureTable();

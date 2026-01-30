@@ -79,7 +79,8 @@ public class ActivityMultiSigTests
             hostId,
             hostAff.Id,
             "collab",
-            new List<string> { coAff.Id }
+            new List<string> { coAff.Id },
+            null
         ), CancellationToken.None);
         Assert.Equal(ActivityStatus.PendingMultiSig, pending.Status);
 

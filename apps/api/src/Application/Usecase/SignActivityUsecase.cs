@@ -46,10 +46,7 @@ public sealed class SignActivityUsecase : IUsecase<SignActivityRequest, Activity
         {
             throw new InvalidOperationException("signer_not_in_cocreators");
         }
-        if (activity.Signatures.Contains(request.AffiliationId, StringComparer.Ordinal))
-        {
-            throw new InvalidOperationException("already_signed");
-        }
+        var alreadySigned = activity.Signatures.Contains(request.AffiliationId, StringComparer.Ordinal);
 
         var affiliation = await _affiliations.GetAffiliationAsync(request.AffiliationId, cancellationToken);
         if (affiliation == null)
@@ -59,6 +56,23 @@ public sealed class SignActivityUsecase : IUsecase<SignActivityRequest, Activity
         if (!string.Equals(affiliation.OwnerId, auth.UserId, StringComparison.Ordinal))
         {
             throw new UnauthorizedAccessException("ownership_mismatch");
+        }
+
+        if (alreadySigned)
+        {
+            return new Activity
+            {
+                Id = activity.Id,
+                AffiliationId = activity.AffiliationId,
+                WorldId = activity.WorldId,
+                OwnerId = activity.OwnerId,
+                Content = activity.Content,
+                Status = activity.Status,
+                CreatedAt = activity.CreatedAt,
+                ExpiresAt = activity.ExpiresAt,
+                CoCreatorIds = activity.CoCreators,
+                SignatureIds = activity.Signatures
+            };
         }
 
         var newSignatures = new List<string>(activity.Signatures) { request.AffiliationId };
@@ -80,6 +94,7 @@ public sealed class SignActivityUsecase : IUsecase<SignActivityRequest, Activity
             Content = updated.Content,
             Status = updated.Status,
             CreatedAt = updated.CreatedAt,
+            ExpiresAt = updated.ExpiresAt,
             CoCreatorIds = updated.CoCreators,
             SignatureIds = updated.Signatures
         };

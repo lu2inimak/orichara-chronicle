@@ -4,5 +4,6 @@ public sealed record PostActivityRequest(
     string? AuthToken,
     string AffiliationId,
     string Content,
-    List<string>? CoCreators
+    List<string>? CoCreators,
+    string? IdempotencyKey
 );
