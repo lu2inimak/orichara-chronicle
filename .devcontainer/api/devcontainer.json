@@ -1,0 +1,26 @@
+{
+    "name": "OCC Apps Api Dev",
+    "dockerComposeFile": [
+        "../../infra/compose/compose.network.yml",
+        "../../infra/compose/compose.api.dev.yml",
+        "../../infra/compose/compose.localstack.yml"
+    ],
+    "service": "api",
+    "workspaceFolder": "/workspace",
+    "features": {
+        "ghcr.io/devcontainers/features/terraform:1": {},
+        "ghcr.io/devcontainers/features/aws-cli:1": {},
+        "ghcr.io/devcontainers/features/dotnet:2": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csharp",
+                "ms-dotnettools.csdevkit",
+                "ms-azuretools.vscode-docker",
+                "hashicorp.terraform"
+            ]
+        }
+    },
+    "remoteUser": "root"
+}

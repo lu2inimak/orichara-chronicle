@@ -3,7 +3,7 @@ set -eu
 
 : "${AWS_ENDPOINT_URL:?AWS_ENDPOINT_URL is required}"
 : "${AWS_DEFAULT_REGION:=ap-northeast-1}"
-: "${DYNAMODB_TABLE:=oc-main}"
+: "${DYNAMODB_TABLE:=occ-main}"
 
 echo "[init-aws:dynamodb] endpoint=${AWS_ENDPOINT_URL} region=${AWS_DEFAULT_REGION}"
 echo "[init-aws:dynamodb] table=${DYNAMODB_TABLE}"
@@ -17,12 +17,24 @@ else
     dynamodb create-table \
       --table-name "${DYNAMODB_TABLE}" \
       --attribute-definitions \
-        AttributeName=pk,AttributeType=S \
-        AttributeName=sk,AttributeType=S \
+        AttributeName=PK,AttributeType=S \
+        AttributeName=SK,AttributeType=S \
+        AttributeName=GSI_TimelinePK,AttributeType=S \
+        AttributeName=GSI_TimelineSK,AttributeType=S \
       --key-schema \
-        AttributeName=pk,KeyType=HASH \
-        AttributeName=sk,KeyType=RANGE \
+        AttributeName=PK,KeyType=HASH \
+        AttributeName=SK,KeyType=RANGE \
       --billing-mode PAY_PER_REQUEST \
+      --global-secondary-indexes '[
+        {
+          "IndexName": "GSI_Timeline",
+          "KeySchema": [
+            {"AttributeName": "GSI_TimelinePK", "KeyType": "HASH"},
+            {"AttributeName": "GSI_TimelineSK", "KeyType": "RANGE"}
+          ],
+          "Projection": {"ProjectionType": "ALL"}
+        }
+      ]' \
     >/dev/null
 fi
 

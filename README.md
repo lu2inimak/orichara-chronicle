@@ -85,8 +85,16 @@ make dev
 - Web: http://localhost:3000
 - API: http://localhost:8080
 
+### API manual test
+
+- You can try the API with `apps/api/Api.http`.
+  - VS Code requires the REST Client extension.
+  - JetBrains (IntelliJ/GoLand/Rider) can run it with the built-in HTTP Client.
+
 ## Documentation
 
 Detailed specifications and architectural designs are provided below.
 
 1. [Technical overview](./docs/10_technical_overview.md)
+
+2. [ADRs](./docs/ADR/)

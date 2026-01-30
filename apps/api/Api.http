@@ -1,0 +1,111 @@
+@baseUrl = http://localhost:8080
+@userId = user_123
+
+### Health
+GET {{baseUrl}}/health
+
+### Get Me
+GET {{baseUrl}}/me
+X-User-Id: {{userId}}
+
+### Create Character
+POST {{baseUrl}}/characters
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "name": "Alice",
+  "bio": "hello",
+  "avatar_url": "https://example.com/a.png"
+}
+
+### Update Character
+PATCH {{baseUrl}}/characters/{{characterId}}
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "name": "Alice v2"
+}
+
+### Create World
+POST {{baseUrl}}/worlds
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "name": "My World",
+  "description": "test"
+}
+
+### Create Activity (Idempotency-Key)
+POST {{baseUrl}}/activities
+Content-Type: application/json
+X-User-Id: {{userId}}
+Idempotency-Key: {{activityKey}}
+
+{
+  "affiliation_id": "{{affiliationId}}",
+  "content": "hello",
+  "co_creators": []
+}
+
+### Reject Activity
+POST {{baseUrl}}/activities/{{activityId}}/reject
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "affiliation_id": "{{affiliationId}}"
+}
+
+### Archive Pending Activity
+POST {{baseUrl}}/activities/{{activityId}}/archive
+X-User-Id: {{userId}}
+
+### Request Join
+POST {{baseUrl}}/worlds/{{worldId}}/join
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "character_id": "{{characterId}}"
+}
+
+### Approve Affiliation
+PATCH {{baseUrl}}/affiliations/{{affiliationId}}/approve
+X-User-Id: {{userId}}
+
+### Post Activity (single)
+POST {{baseUrl}}/activities
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "affiliation_id": "{{affiliationId}}",
+  "content": "hello"
+}
+
+### Post Activity (multi-sig)
+POST {{baseUrl}}/activities
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "affiliation_id": "{{affiliationId}}",
+  "content": "collab",
+  "co_creators": ["{{coCreatorAffiliationId}}"]
+}
+
+### Sign Activity
+POST {{baseUrl}}/activities/{{activityId}}/sign
+Content-Type: application/json
+X-User-Id: {{coCreatorUserId}}
+
+{
+  "affiliation_id": "{{coCreatorAffiliationId}}"
+}
+
+### World Timeline
+GET {{baseUrl}}/worlds/{{worldId}}/timeline
+X-User-Id: {{userId}}

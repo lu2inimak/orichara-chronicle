@@ -7,12 +7,15 @@ services:
     volumes:
       - ../../apps/api:/workspace
     environment:
-      - APP_ENV=dev
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
-      - AWS_ENDPOINT_URL=http://localstack:4566
-    env_file:
-      - ../config/aws.env
+      APP_ENV: dev
+      DOTNET_ENVIRONMENT: Development
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-ap-northeast-1}
+      AWS_REGION: ${AWS_REGION:-ap-northeast-1}
+      S3_BUCKET: ${S3_BUCKET:-occ-media}
+      DYNAMODB_TABLE: ${DYNAMODB_TABLE:-occ-main}
     depends_on:
       - localstack
     networks:
