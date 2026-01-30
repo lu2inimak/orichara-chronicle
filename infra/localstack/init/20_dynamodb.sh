@@ -19,10 +19,22 @@ else
       --attribute-definitions \
         AttributeName=PK,AttributeType=S \
         AttributeName=SK,AttributeType=S \
+        AttributeName=GSI_TimelinePK,AttributeType=S \
+        AttributeName=GSI_TimelineSK,AttributeType=S \
       --key-schema \
         AttributeName=PK,KeyType=HASH \
         AttributeName=SK,KeyType=RANGE \
       --billing-mode PAY_PER_REQUEST \
+      --global-secondary-indexes '[
+        {
+          "IndexName": "GSI_Timeline",
+          "KeySchema": [
+            {"AttributeName": "GSI_TimelinePK", "KeyType": "HASH"},
+            {"AttributeName": "GSI_TimelineSK", "KeyType": "RANGE"}
+          ],
+          "Projection": {"ProjectionType": "ALL"}
+        }
+      ]' \
     >/dev/null
 fi
 

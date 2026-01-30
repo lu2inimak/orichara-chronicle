@@ -9,18 +9,14 @@
     "workspaceFolder": "/workspace",
     "features": {
         "ghcr.io/devcontainers/features/terraform:1": {},
-        "ghcr.io/devcontainers/features/aws-cli:1": {}
+        "ghcr.io/devcontainers/features/aws-cli:1": {},
+        "ghcr.io/devcontainers/features/dotnet:2": {}
     },
     "customizations": {
         "vscode": {
-            "settings": {
-                "go.useLanguageServer": true,
-                "gopls": {
-                    "ui.semanticTokens": true
-                }
-            },
             "extensions": [
-                "golang.Go",
+                "ms-dotnettools.csharp",
+                "ms-dotnettools.csdevkit",
                 "ms-azuretools.vscode-docker",
                 "hashicorp.terraform"
             ]

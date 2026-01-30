@@ -8,6 +8,7 @@ services:
       - ../../apps/api:/workspace
     environment:
       APP_ENV: dev
+      DOTNET_ENVIRONMENT: Development
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
       AWS_ENDPOINT_URL: http://localstack:4566
