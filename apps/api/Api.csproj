@@ -7,7 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.12" />
+    <ProjectReference Include="src\\Domain\\Api.Domain.csproj" />
+    <ProjectReference Include="src\\Application\\Api.Application.csproj" />
+    <ProjectReference Include="src\\Infrastructure\\Api.Infrastructure.csproj" />
+    <ProjectReference Include="src\\Presentation\\Api.Presentation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="src\\Domain\\**\\*.cs" />
+    <Compile Remove="src\\Application\\**\\*.cs" />
+    <Compile Remove="src\\Infrastructure\\**\\*.cs" />
+    <Compile Remove="src\\Presentation\\**\\*.cs" />
   </ItemGroup>
 
 </Project>

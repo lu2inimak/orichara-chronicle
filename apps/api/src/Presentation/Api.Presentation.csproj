@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\\Domain\\Api.Domain.csproj" />
+    <ProjectReference Include="..\\Application\\Api.Application.csproj" />
+    <ProjectReference Include="..\\Infrastructure\\Api.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

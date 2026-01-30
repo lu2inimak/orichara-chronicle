@@ -1,6 +1,89 @@
-@Api_HostAddress = http://localhost:0
+@baseUrl = http://localhost:8080
+@userId = user_123
 
-GET {{Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Health
+GET {{baseUrl}}/health
 
-###
+### AWS Check
+GET {{baseUrl}}/aws-check
+
+### Get Me
+GET {{baseUrl}}/me
+X-User-Id: {{userId}}
+
+### Create Character
+POST {{baseUrl}}/characters
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "name": "Alice",
+  "bio": "hello",
+  "avatar_url": "https://example.com/a.png"
+}
+
+### Update Character
+PATCH {{baseUrl}}/characters/{{characterId}}
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "name": "Alice v2"
+}
+
+### Create World
+POST {{baseUrl}}/worlds
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "name": "My World",
+  "description": "test"
+}
+
+### Request Join
+POST {{baseUrl}}/worlds/{{worldId}}/join
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "character_id": "{{characterId}}"
+}
+
+### Approve Affiliation
+PATCH {{baseUrl}}/affiliations/{{affiliationId}}/approve
+X-User-Id: {{userId}}
+
+### Post Activity (single)
+POST {{baseUrl}}/activities
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "affiliation_id": "{{affiliationId}}",
+  "content": "hello"
+}
+
+### Post Activity (multi-sig)
+POST {{baseUrl}}/activities
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "affiliation_id": "{{affiliationId}}",
+  "content": "collab",
+  "co_creators": ["{{coCreatorAffiliationId}}"]
+}
+
+### Sign Activity
+POST {{baseUrl}}/activities/{{activityId}}/sign
+Content-Type: application/json
+X-User-Id: {{coCreatorUserId}}
+
+{
+  "affiliation_id": "{{coCreatorAffiliationId}}"
+}
+
+### World Timeline
+GET {{baseUrl}}/worlds/{{worldId}}/timeline
+X-User-Id: {{userId}}
