@@ -1,9 +1,15 @@
-FROM golang:1.23-bookworm
-
-RUN apt-get update && apt-get install -y git curl unzip
+FROM mcr.microsoft.com/dotnet/sdk:10.0
 
 WORKDIR /workspace
 
-RUN go install github.com/air-verse/air@v1.61.7
+# Copy project files first for better layer caching
+COPY Api.csproj ./
+RUN dotnet restore
 
-CMD ["air", "-c", ".air.toml"]
+# Copy the rest of the source
+COPY . ./
+
+ENV ASPNETCORE_URLS=http://0.0.0.0:8080
+EXPOSE 8080
+
+CMD ["dotnet", "run", "--no-launch-profile"]
