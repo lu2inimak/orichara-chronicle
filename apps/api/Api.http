@@ -4,9 +4,6 @@
 ### Health
 GET {{baseUrl}}/health
 
-### AWS Check
-GET {{baseUrl}}/aws-check
-
 ### Get Me
 GET {{baseUrl}}/me
 X-User-Id: {{userId}}
