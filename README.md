@@ -85,6 +85,10 @@ make dev
 - Web: http://localhost:3000
 - API: http://localhost:8080
 
+### Frontend status
+
+The frontend is currently **incomplete**. At this stage, only **character creation** is supported in the UI.
+
 ### API manual test
 
 - You can try the API with `apps/api/Api.http`.
