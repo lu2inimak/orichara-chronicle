@@ -28,6 +28,9 @@ public sealed class DynamoDbClientWrapper : IDynamoDbClient
     public Task<QueryResponse> QueryAsync(QueryRequest request, CancellationToken cancellationToken) =>
         ExecuteWithLogging("Query", request.TableName, () => _client.QueryAsync(request, cancellationToken));
 
+    public Task<ScanResponse> ScanAsync(ScanRequest request, CancellationToken cancellationToken) =>
+        ExecuteWithLogging("Scan", request.TableName, () => _client.ScanAsync(request, cancellationToken));
+
     public Task<TransactWriteItemsResponse> TransactWriteItemsAsync(TransactWriteItemsRequest request, CancellationToken cancellationToken) =>
         ExecuteWithLogging("TransactWriteItems", request.TransactItems.FirstOrDefault()?.Put?.TableName, () => _client.TransactWriteItemsAsync(request, cancellationToken));
 

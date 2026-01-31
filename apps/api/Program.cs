@@ -15,6 +15,9 @@ var endpoint = Environment.GetEnvironmentVariable("AWS_ENDPOINT_URL");
 var accessKey = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID");
 var secretKey = Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY");
 var dynamoMode = Environment.GetEnvironmentVariable("DYNAMO_MODE");
+var appEnv = Environment.GetEnvironmentVariable("APP_ENV") ?? string.Empty;
+var dotnetEnv = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? string.Empty;
+var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS") ?? string.Empty;
 
 builder.Services.AddSingleton(new DynamoOptions(tableName));
 builder.Services.AddDynamoDb(region, endpoint, accessKey, secretKey, dynamoMode, tableName);
@@ -25,12 +28,40 @@ builder.Services.Configure<JsonOptions>(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("dev", policy =>
+    {
+        var isDev = string.Equals(appEnv, "dev", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(dotnetEnv, "Development", StringComparison.OrdinalIgnoreCase);
+        if (isDev)
+        {
+            policy.AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+            return;
+        }
+
+        var origins = corsOrigins
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (origins.Length == 0)
+        {
+            return;
+        }
+        policy.WithOrigins(origins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddUserModule();
 builder.Services.AddCharactersModule();
 builder.Services.AddWorldModule();
 builder.Services.AddActivityModule();
 
 var app = builder.Build();
+
+app.UseCors("dev");
 
 app.Use(async (context, next) =>
 {
