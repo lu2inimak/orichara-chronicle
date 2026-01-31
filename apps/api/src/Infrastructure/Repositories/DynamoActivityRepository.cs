@@ -1,4 +1,5 @@
 using Amazon.DynamoDBv2.Model;
+using System.Linq;
 using Api.Domain.Entities;
 using Api.Domain.Enums;
 using Api.Domain.ReadModels;
@@ -247,6 +248,62 @@ public sealed class DynamoActivityRepository : IActivityRepository
                 [":GsiSk"] = new AttributeValue { S = $"ACT#{record.CreatedAt}" }
             }
         }, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Activity>> ListActivitiesAsync(int limit, CancellationToken cancellationToken)
+    {
+        EnsureTable();
+        if (limit <= 0)
+        {
+            limit = 50;
+        }
+
+        var response = await _dynamo.ScanAsync(new ScanRequest
+        {
+            TableName = _options.TableName,
+            Limit = limit,
+            FilterExpression = "begins_with(#pk, :pk) AND #sk = :sk",
+            ExpressionAttributeNames = new Dictionary<string, string>
+            {
+                ["#pk"] = "PK",
+                ["#sk"] = "SK"
+            },
+            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+            {
+                [":pk"] = new AttributeValue { S = "ACT#" },
+                [":sk"] = new AttributeValue { S = "INFO" }
+            }
+        }, cancellationToken);
+
+        var items = new List<Activity>(response.Items.Count);
+        foreach (var item in response.Items)
+        {
+            var id = item.TryGetValue("ActivityID", out var idValue)
+                ? idValue.S ?? string.Empty
+                : item.TryGetValue("PK", out var pk) ? pk.S?.Replace("ACT#", string.Empty, StringComparison.Ordinal) ?? string.Empty : string.Empty;
+
+            var status = ParseStatus(item.TryGetValue("Status", out var statusValue) ? statusValue.S : null);
+            if (status != ActivityStatus.Published)
+            {
+                continue;
+            }
+
+            items.Add(new Activity
+            {
+                Id = id,
+                AffiliationId = item.TryGetValue("AffiliationID", out var aff) ? aff.S ?? string.Empty : string.Empty,
+                WorldId = item.TryGetValue("WorldID", out var world) ? world.S ?? string.Empty : string.Empty,
+                OwnerId = item.TryGetValue("OwnerID", out var owner) ? owner.S ?? string.Empty : string.Empty,
+                Content = item.TryGetValue("Content", out var content) ? content.S ?? string.Empty : string.Empty,
+                Status = status,
+                CreatedAt = item.TryGetValue("CreatedAt", out var created) ? created.S ?? string.Empty : string.Empty
+            });
+        }
+
+        return items
+            .OrderByDescending(a => a.CreatedAt)
+            .Take(limit)
+            .ToList();
     }
 
     public async Task<IReadOnlyList<Activity>> ListWorldTimelineAsync(string worldId, int limit, CancellationToken cancellationToken)

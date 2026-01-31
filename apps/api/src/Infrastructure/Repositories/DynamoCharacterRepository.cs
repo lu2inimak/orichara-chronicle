@@ -1,4 +1,5 @@
 using Amazon.DynamoDBv2.Model;
+using System.Linq;
 using Api.Domain.Entities;
 using Api.Domain.Repositories;
 using Api.Infrastructure;
@@ -120,6 +121,48 @@ public sealed class DynamoCharacterRepository : ICharacterRepository
         }, cancellationToken);
 
         return MapCharacter(response.Attributes, characterId);
+    }
+
+    public async Task<IReadOnlyList<Character>> ListCharactersAsync(int limit, CancellationToken cancellationToken)
+    {
+        EnsureTable();
+        if (limit <= 0)
+        {
+            limit = 50;
+        }
+
+        var response = await _dynamo.ScanAsync(new ScanRequest
+        {
+            TableName = _options.TableName,
+            Limit = limit,
+            FilterExpression = "begins_with(#pk, :pk) AND #sk = :sk",
+            ExpressionAttributeNames = new Dictionary<string, string>
+            {
+                ["#pk"] = "PK",
+                ["#sk"] = "SK"
+            },
+            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+            {
+                [":pk"] = new AttributeValue { S = "CHAR#" },
+                [":sk"] = new AttributeValue { S = "INFO" }
+            }
+        }, cancellationToken);
+
+        var items = new List<Character>(response.Items.Count);
+        foreach (var item in response.Items)
+        {
+            var id = item.TryGetValue("PK", out var pk) ? pk.S?.Replace("CHAR#", string.Empty, StringComparison.Ordinal) ?? string.Empty : string.Empty;
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                continue;
+            }
+            items.Add(MapCharacter(item, id));
+        }
+
+        return items
+            .OrderByDescending(c => c.UpdatedAt)
+            .Take(limit)
+            .ToList();
     }
 
     private void EnsureTable()

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 
 namespace Api.Presentation.Endpoints;
 
@@ -22,6 +23,34 @@ public static class CharacterEndpoints
 
     public static IEndpointRouteBuilder MapCharactersEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapGet("/characters", async (HttpContext context, ICharacterRepository repository, int? limit, CancellationToken ct) =>
+        {
+            try
+            {
+                var items = await repository.ListCharactersAsync(limit ?? 50, ct);
+                var responseItems = items.Select(character => new CharacterListItem
+                {
+                    Id = character.Id,
+                    Name = character.Name,
+                    Author = character.OwnerId,
+                    AvatarUrl = character.AvatarUrl,
+                    UpdatedAt = character.UpdatedAt
+                }).ToList();
+
+                return ApiResults.Ok(context, new { items = responseItems });
+            }
+            catch (Exception ex)
+            {
+                return ApiResults.Error(context, new ApiError
+                {
+                    Status = StatusCodes.Status500InternalServerError,
+                    Code = "INTERNAL_ERROR",
+                    Message = "Failed to list characters.",
+                    Details = new Dictionary<string, object> { ["error"] = ex.Message }
+                });
+            }
+        });
+
         app.MapPost("/characters", async (HttpContext context, CreateCharacterUsecase usecase, CharacterCreateRequest request, CancellationToken ct) =>
         {
             try
@@ -161,6 +190,20 @@ public static class CharacterEndpoints
         var userId = context.Request.Headers["X-User-Id"].FirstOrDefault();
         return string.IsNullOrWhiteSpace(userId) ? null : userId;
     }
+}
+
+public sealed class CharacterListItem
+{
+    [System.Text.Json.Serialization.JsonPropertyName("id")]
+    public string Id { get; init; } = string.Empty;
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    public string Name { get; init; } = string.Empty;
+    [System.Text.Json.Serialization.JsonPropertyName("author")]
+    public string Author { get; init; } = string.Empty;
+    [System.Text.Json.Serialization.JsonPropertyName("avatar_url")]
+    public string? AvatarUrl { get; init; }
+    [System.Text.Json.Serialization.JsonPropertyName("updated_at")]
+    public string UpdatedAt { get; init; } = string.Empty;
 }
 
 public sealed class CharacterCreateRequest

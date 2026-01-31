@@ -11,5 +11,6 @@ public interface IActivityRepository
     Task<ActivityRecord> UpdateActivitySignaturesAsync(ActivityRecord record, List<string> signatures, ActivityStatus status, CancellationToken cancellationToken);
     Task<ActivityRecord> UpdateActivityStatusAsync(ActivityRecord record, ActivityStatus status, bool hideFromTimeline, CancellationToken cancellationToken);
     Task PublishActivityAsync(ActivityRecord record, CancellationToken cancellationToken);
+    Task<IReadOnlyList<Activity>> ListActivitiesAsync(int limit, CancellationToken cancellationToken);
     Task<IReadOnlyList<Activity>> ListWorldTimelineAsync(string worldId, int limit, CancellationToken cancellationToken);
 }
