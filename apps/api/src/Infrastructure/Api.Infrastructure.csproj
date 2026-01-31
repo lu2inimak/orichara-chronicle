@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.12" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-preview.6.25358.103" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-preview.6.25358.103" />
   </ItemGroup>

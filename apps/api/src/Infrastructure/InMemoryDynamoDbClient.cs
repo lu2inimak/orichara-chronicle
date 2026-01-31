@@ -128,6 +128,31 @@ public sealed class InMemoryDynamoDbClient : IDynamoDbClient
         return Task.FromResult(new ScanResponse { Items = items });
     }
 
+    public Task<BatchGetItemResponse> BatchGetItemAsync(BatchGetItemRequest request, CancellationToken cancellationToken)
+    {
+        var responses = new Dictionary<string, List<Dictionary<string, AttributeValue>>>(StringComparer.Ordinal);
+        foreach (var (tableName, keys) in request.RequestItems)
+        {
+            var table = GetTable(tableName);
+            var items = new List<Dictionary<string, AttributeValue>>();
+            foreach (var key in keys.Keys)
+            {
+                var tuple = GetKey(key);
+                if (table.TryGetValue(tuple, out var item))
+                {
+                    items.Add(new Dictionary<string, AttributeValue>(item));
+                }
+            }
+            responses[tableName] = items;
+        }
+
+        return Task.FromResult(new BatchGetItemResponse
+        {
+            Responses = responses,
+            UnprocessedKeys = new Dictionary<string, KeysAndAttributes>()
+        });
+    }
+
     public async Task<TransactWriteItemsResponse> TransactWriteItemsAsync(TransactWriteItemsRequest request, CancellationToken cancellationToken)
     {
         foreach (var item in request.TransactItems)

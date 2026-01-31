@@ -8,6 +8,13 @@ GET {{baseUrl}}/health
 GET {{baseUrl}}/me
 X-User-Id: {{userId}}
 
+### List Owned Characters
+GET {{baseUrl}}/characters?owned=true
+X-User-Id: {{userId}}
+
+### List Characters (Sorted)
+GET {{baseUrl}}/characters?sort=recently_updated
+
 ### Create Character
 POST {{baseUrl}}/characters
 Content-Type: application/json

@@ -8,4 +8,5 @@ public interface ICharacterRepository
     Task<Character> CreateCharacterAsync(string userId, Character character, CancellationToken cancellationToken);
     Task<Character> UpdateCharacterAsync(string characterId, Dictionary<string, string> updates, CancellationToken cancellationToken);
     Task<IReadOnlyList<Character>> ListCharactersAsync(int limit, CancellationToken cancellationToken);
+    Task<IReadOnlyList<Character>> ListCharactersByIdsAsync(IReadOnlyList<string> characterIds, CancellationToken cancellationToken);
 }

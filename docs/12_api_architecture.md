@@ -19,6 +19,12 @@ To maximize cost efficiency and scalability, the system utilizes a **serverless 
 
 - `GET /me`
 	- Retrieves the logged-in user’s profile, owned Characters, and hosted Worlds.
+
+- `GET /characters?owned=true`
+	- Retrieves character profiles owned by the logged-in user.
+
+- `GET /characters?sort={mode}`
+	- Supports `hot`, `most_viewed`, `recently_updated`, `random` (defaults to recent).
     
 - `POST /characters`
 	- Creates a new Character profile.

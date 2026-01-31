@@ -1,5 +1,7 @@
+using Api.Application.Auth;
 using Api.Application.DTO;
 using Api.Application.Usecase;
+using Api.Domain.Entities;
 using Api.Domain.Repositories;
 using Api.Infrastructure.Repositories;
 using Api.Presentation.Http;
@@ -23,11 +25,31 @@ public static class CharacterEndpoints
 
     public static IEndpointRouteBuilder MapCharactersEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/characters", async (HttpContext context, ICharacterRepository repository, int? limit, CancellationToken ct) =>
+        app.MapGet("/characters", async (HttpContext context, ICharacterRepository repository, IUserRepository userRepository, IAuthenticator authenticator, int? limit, bool? owned, string? sort, CancellationToken ct) =>
         {
             try
             {
-                var items = await repository.ListCharactersAsync(limit ?? 50, ct);
+                var normalizedLimit = NormalizeLimit(limit);
+                IReadOnlyList<Character> items;
+                if (owned == true)
+                {
+                    var auth = authenticator.Authenticate(ReadAuthToken(context));
+                    if (auth is null)
+                    {
+                        throw new UnauthorizedAccessException("auth_required");
+                    }
+                    var snapshot = await userRepository.GetSnapshotAsync(auth.UserId, ct);
+                    items = await repository.ListCharactersByIdsAsync(snapshot.OwnedCharacterIds, ct);
+                }
+                else
+                {
+                    items = await repository.ListCharactersAsync(normalizedLimit, ct);
+                }
+
+                items = SortCharacters(items, sort)
+                    .Take(normalizedLimit)
+                    .ToList();
+
                 var responseItems = items.Select(character => new CharacterListItem
                 {
                     Id = character.Id,
@@ -38,6 +60,15 @@ public static class CharacterEndpoints
                 }).ToList();
 
                 return ApiResults.Ok(context, new { items = responseItems });
+            }
+            catch (UnauthorizedAccessException ex) when (ex.Message.Contains("auth_required"))
+            {
+                return ApiResults.Error(context, new ApiError
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Code = "AUTH_REQUIRED",
+                    Message = "Authentication required."
+                });
             }
             catch (Exception ex)
             {
@@ -178,6 +209,37 @@ public static class CharacterEndpoints
         });
 
         return app;
+    }
+
+    private static IEnumerable<Character> SortCharacters(IReadOnlyList<Character> items, string? sort)
+    {
+        if (items.Count == 0)
+        {
+            return items;
+        }
+
+        switch (sort?.Trim().ToLowerInvariant())
+        {
+            case "random":
+                return items.OrderBy(_ => Random.Shared.Next());
+            case "hot":
+            case "most_viewed":
+            case "recently_updated":
+            case null:
+            case "":
+                return items.OrderByDescending(item => item.UpdatedAt);
+            default:
+                return items;
+        }
+    }
+
+    private static int NormalizeLimit(int? limit)
+    {
+        if (!limit.HasValue || limit.Value <= 0)
+        {
+            return 50;
+        }
+        return limit.Value;
     }
 
     private static string? ReadAuthToken(HttpContext context)

@@ -21,6 +21,7 @@ var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS") ?? string.E
 
 builder.Services.AddSingleton(new DynamoOptions(tableName));
 builder.Services.AddDynamoDb(region, endpoint, accessKey, secretKey, dynamoMode, tableName);
+builder.Services.AddS3(region, endpoint, accessKey, secretKey);
 
 builder.Services.AddSingleton<IAuthenticator, MockAuthenticator>();
 builder.Services.Configure<JsonOptions>(options =>
@@ -103,5 +104,6 @@ app.MapUserEndpoints();
 app.MapCharactersEndpoints();
 app.MapWorldEndpoints();
 app.MapActivityEndpoints();
+app.MapUploadEndpoints();
 
 app.Run();

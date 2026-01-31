@@ -165,6 +165,70 @@ public sealed class DynamoCharacterRepository : ICharacterRepository
             .ToList();
     }
 
+    public async Task<IReadOnlyList<Character>> ListCharactersByIdsAsync(IReadOnlyList<string> characterIds, CancellationToken cancellationToken)
+    {
+        EnsureTable();
+        if (characterIds == null || characterIds.Count == 0)
+        {
+            return Array.Empty<Character>();
+        }
+
+        var ids = characterIds
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        if (ids.Count == 0)
+        {
+            return Array.Empty<Character>();
+        }
+
+        const int batchSize = 100;
+        var results = new Dictionary<string, Character>(StringComparer.Ordinal);
+
+        for (var i = 0; i < ids.Count; i += batchSize)
+        {
+            var batch = ids.Skip(i).Take(batchSize).ToList();
+            var requestItems = new Dictionary<string, KeysAndAttributes>
+            {
+                [_options.TableName] = new KeysAndAttributes
+                {
+                    Keys = batch.Select(id => new Dictionary<string, AttributeValue>
+                    {
+                        ["PK"] = new AttributeValue { S = $"CHAR#{id}" },
+                        ["SK"] = new AttributeValue { S = "INFO" }
+                    }).ToList()
+                }
+            };
+
+            while (requestItems.Count > 0)
+            {
+                var response = await _dynamo.BatchGetItemAsync(new BatchGetItemRequest
+                {
+                    RequestItems = requestItems
+                }, cancellationToken);
+
+                if (response.Responses.TryGetValue(_options.TableName, out var items))
+                {
+                    foreach (var item in items)
+                    {
+                        var id = TryReadCharacterId(item);
+                        if (string.IsNullOrWhiteSpace(id) || results.ContainsKey(id))
+                        {
+                            continue;
+                        }
+                        results[id] = MapCharacter(item, id);
+                    }
+                }
+
+                requestItems = response.UnprocessedKeys ?? new Dictionary<string, KeysAndAttributes>();
+            }
+        }
+
+        return results.Values
+            .OrderByDescending(c => c.UpdatedAt)
+            .ToList();
+    }
+
     private void EnsureTable()
     {
         if (string.IsNullOrWhiteSpace(_options.TableName))
@@ -185,5 +249,16 @@ public sealed class DynamoCharacterRepository : ICharacterRepository
             CreatedAt = item.TryGetValue("CreatedAt", out var createdAt) ? createdAt.S ?? string.Empty : string.Empty,
             UpdatedAt = item.TryGetValue("UpdatedAt", out var updatedAt) ? updatedAt.S ?? string.Empty : string.Empty
         };
+    }
+
+    private static string? TryReadCharacterId(Dictionary<string, AttributeValue> item)
+    {
+        if (!item.TryGetValue("PK", out var pk) || string.IsNullOrWhiteSpace(pk.S))
+        {
+            return null;
+        }
+        return pk.S.StartsWith("CHAR#", StringComparison.Ordinal)
+            ? pk.S.Substring("CHAR#".Length)
+            : null;
     }
 }
