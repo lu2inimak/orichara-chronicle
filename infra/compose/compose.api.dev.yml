@@ -15,6 +15,8 @@ services:
       AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-ap-northeast-1}
       AWS_REGION: ${AWS_REGION:-ap-northeast-1}
       S3_BUCKET: ${S3_BUCKET:-occ-media}
+      S3_PRESIGN_ENDPOINT: ${S3_PRESIGN_ENDPOINT:-http://localhost:4566}
+      S3_PUBLIC_BASE_URL: ${S3_PUBLIC_BASE_URL:-http://localhost:4566/${S3_BUCKET:-occ-media}}
       DYNAMODB_TABLE: ${DYNAMODB_TABLE:-occ-main}
     depends_on:
       - localstack
