@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 
 namespace Api.Presentation.Endpoints;
 
@@ -25,6 +26,35 @@ public static class ActivityEndpoints
 
     public static IEndpointRouteBuilder MapActivityEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapGet("/activities", async (HttpContext context, IActivityRepository repository, int? limit, CancellationToken ct) =>
+        {
+            try
+            {
+                var items = await repository.ListActivitiesAsync(limit ?? 50, ct);
+                var responseItems = items.Select(activity => new ActivityListItem
+                {
+                    Id = activity.Id,
+                    Title = string.IsNullOrWhiteSpace(activity.Content) ? $"Activity {activity.Id}" : activity.Content,
+                    Author = activity.OwnerId,
+                    WorldId = activity.WorldId,
+                    Status = activity.Status.ToString(),
+                    CreatedAt = activity.CreatedAt
+                }).ToList();
+
+                return ApiResults.Ok(context, new { items = responseItems });
+            }
+            catch (Exception ex)
+            {
+                return ApiResults.Error(context, new ApiError
+                {
+                    Status = StatusCodes.Status500InternalServerError,
+                    Code = "INTERNAL_ERROR",
+                    Message = "Failed to list activities.",
+                    Details = new Dictionary<string, object> { ["error"] = ex.Message }
+                });
+            }
+        });
+
         app.MapPost("/activities", async (HttpContext context, PostActivityUsecase usecase, ActivityCreateRequest request, CancellationToken ct) =>
         {
             try
@@ -330,6 +360,24 @@ public static class ActivityEndpoints
         var key = context.Request.Headers["Idempotency-Key"].FirstOrDefault();
         return string.IsNullOrWhiteSpace(key) ? null : key;
     }
+}
+
+public sealed class ActivityListItem
+{
+    [System.Text.Json.Serialization.JsonPropertyName("id")]
+    public string Id { get; init; } = string.Empty;
+    [System.Text.Json.Serialization.JsonPropertyName("title")]
+    public string Title { get; init; } = string.Empty;
+    [System.Text.Json.Serialization.JsonPropertyName("author")]
+    public string Author { get; init; } = string.Empty;
+    [System.Text.Json.Serialization.JsonPropertyName("image_url")]
+    public string? ImageUrl { get; init; }
+    [System.Text.Json.Serialization.JsonPropertyName("world_id")]
+    public string WorldId { get; init; } = string.Empty;
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    public string Status { get; init; } = string.Empty;
+    [System.Text.Json.Serialization.JsonPropertyName("created_at")]
+    public string CreatedAt { get; init; } = string.Empty;
 }
 
 public sealed class ActivityCreateRequest

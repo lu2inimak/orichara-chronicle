@@ -99,6 +99,35 @@ public sealed class InMemoryDynamoDbClient : IDynamoDbClient
         return Task.FromResult(new QueryResponse { Items = items });
     }
 
+    public Task<ScanResponse> ScanAsync(ScanRequest request, CancellationToken cancellationToken)
+    {
+        var table = GetTable(request.TableName);
+        var items = table.Values.ToList();
+
+        if (!string.IsNullOrWhiteSpace(request.FilterExpression) && request.ExpressionAttributeValues != null)
+        {
+            if (request.FilterExpression.Contains("begins_with", StringComparison.Ordinal)
+                && request.ExpressionAttributeValues.TryGetValue(":pk", out var pkVal))
+            {
+                var prefix = pkVal.S ?? string.Empty;
+                items = items.Where(i => i.TryGetValue("PK", out var pk) && (pk.S ?? string.Empty).StartsWith(prefix, StringComparison.Ordinal)).ToList();
+            }
+
+            if (request.ExpressionAttributeValues.TryGetValue(":sk", out var skVal))
+            {
+                var sk = skVal.S ?? string.Empty;
+                items = items.Where(i => i.TryGetValue("SK", out var skAttr) && skAttr.S == sk).ToList();
+            }
+        }
+
+        if (request.Limit is > 0)
+        {
+            items = items.Take(request.Limit.Value).ToList();
+        }
+
+        return Task.FromResult(new ScanResponse { Items = items });
+    }
+
     public async Task<TransactWriteItemsResponse> TransactWriteItemsAsync(TransactWriteItemsRequest request, CancellationToken cancellationToken)
     {
         foreach (var item in request.TransactItems)
